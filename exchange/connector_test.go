@@ -1,7 +1,9 @@
 package exchange_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 	"trading_helper/exchange"
@@ -11,7 +13,7 @@ func TestMain(t *testing.T) {
 	key := "6xUgCXmQ9zCnxXygzCIuFEC9PysFqDENOdE82tF0RHsISDZ9KtCD5r4kkTvhSBPs"
 	secret := "cWPLmSasjcATAs9fFnn69z2xRlju67wPpVTr7ddO6s2UvWSe32Z2sIPheYyUog1T"
 	connector := exchange.GetBinanceConnector(
-		exchange.BinanceProductionBaseURL, key, secret)
+		exchange.BinanceTestnetBaseURL, key, secret)
 
 	start := "2025-10-01 00:00:00"
 	end := "2025-10-01 23:00:00"
@@ -28,5 +30,18 @@ func TestMain(t *testing.T) {
 	fmt.Println("Klines count:", len(klines))
 	for _, kline := range klines {
 		fmt.Printf("%s\n", kline.String())
+	}
+
+	// klines -> data.json  local file
+	// 将结构体切片转换为 JSON
+	data, err := json.MarshalIndent(klines, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+
+	// 写入文件
+	fn := fmt.Sprintf("../data/%s_%s.json", "BTCUSDT", exchange.KlineInterval_1h)
+	if err = os.WriteFile(fn, data, 0644); err != nil {
+		panic(err)
 	}
 }

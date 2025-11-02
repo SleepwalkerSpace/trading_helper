@@ -102,6 +102,7 @@ func (bc *BinanceConnector) Klines(interval KlineInterval, startTime, endTime ui
 		if err := json.Unmarshal(buf, &kline); err != nil {
 			return nil, err
 		}
+		kline.Complete()
 		klines = append(klines, kline)
 	}
 	return klines, nil
