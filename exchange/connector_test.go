@@ -15,10 +15,10 @@ func TestMain(t *testing.T) {
 	connector := exchange.GetBinanceConnector(
 		exchange.BinanceTestnetBaseURL, key, secret)
 
-	start := "2025-10-01 00:00:00"
-	end := "2025-10-01 23:00:00"
-	startTime, _ := time.ParseInLocation(exchange.TimeLayout, start, time.Local)
-	endTime, _ := time.ParseInLocation(exchange.TimeLayout, end, time.Local)
+	start := "2025-11-01 00:00:00"
+	end := "2025-11-02 23:00:00"
+	startTime, _ := time.Parse(exchange.TimeLayout, start)
+	endTime, _ := time.Parse(exchange.TimeLayout, end)
 	klines, err := connector.Klines(
 		exchange.KlineInterval_1h,
 		uint64(startTime.UnixMilli()),
@@ -28,9 +28,6 @@ func TestMain(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println("Klines count:", len(klines))
-	for _, kline := range klines {
-		fmt.Printf("%s\n", kline.String())
-	}
 
 	// klines -> data.json  local file
 	// 将结构体切片转换为 JSON
