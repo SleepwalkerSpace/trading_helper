@@ -4,25 +4,30 @@ import backtrader.indicators as btind
 class Strategy(bt.Strategy):
     params = (
         ('printlog', True),
-        ('add_position_threshold', 500),  # 补仓阈值：价格高于开仓价500
-        ('max_add_times', 3),             # 最大补仓次数
+        ('add_position_threshold', 1250),
+        ('max_add_times', 4),             # 最大补仓次数
     )
     
     def __init__(self):
+        self.leverage = 100
         # 存储指标的字典
         self.indicators = {}
+
+        self.history_rsi_vals = []
         
         for i in range(len(self.datas)):
             data_name = self.datas[i]._name if hasattr(self.datas[i], '_name') else f'data{i}'
             self.indicators[data_name] = {}
             
             # 创建技术指标
+            self.indicators[data_name]['volume_sma'] = btind.SMA(self.datas[i].volume, period=200)
             self.indicators[data_name]['ema20'] = btind.ExponentialMovingAverage(
                 self.datas[i], period=20)
             self.indicators[data_name]['ema200'] = btind.ExponentialMovingAverage(
                 self.datas[i], period=200)
             self.indicators[data_name]['boll'] = btind.BollingerBands(
                 self.datas[i], period=200)
+            self.indicators[data_name]['rsi_ema'] =btind.RSI_EMA(self.datas[i], period=14, upperband=70, lowerband=30, plot=True)
         
         # 订单跟踪和持仓管理
         self.order = None
@@ -31,6 +36,8 @@ class Strategy(bt.Strategy):
         self.position_size = 0         # 持仓数量
         self.add_position_count = 0    # 补仓次数
         self.last_add_price = 0        # 上次补仓价格
+
+        self.exit_condition_1 = False
         
     def are_indicators_ready(self, data_name):
         """检查指标是否已计算完成（避免使用NaN值）"""
@@ -46,8 +53,9 @@ class Strategy(bt.Strategy):
             not bt.math.isnan(ind['boll'].top[0]),
             not bt.math.isnan(ind['boll'].bot[0]),
         ]
-        
+
         return all(conditions)
+
     
     def is_short_signal(self, data_name):
         """检查做空信号条件"""
@@ -65,7 +73,9 @@ class Strategy(bt.Strategy):
             current_price > ind['boll'].top[0],       # 价格 > 布林带上轨
             ind['ema20'][0] >= ind['boll'].top[0],
         ]
-        
+        ok = all(conditions)
+        # if ok:
+        #    print("rsi_ema? ",ind['rsi_ema'][0])
         return all(conditions)
 
     def is_exit_signal(self, data_name):
@@ -78,8 +88,16 @@ class Strategy(bt.Strategy):
         current_price = current_data.close[0]
         
         # 平仓条件1：价格触及布林带下轨
-        exit_condition_1 = current_price <= ind['boll'].bot[0]
-        return exit_condition_1
+        current_exit_condition_1 = current_price <= ind['boll'].bot[0]
+        if self.exit_condition_1 == False:
+            self.exit_condition_1 = current_exit_condition_1
+
+        # self.history_rsi_vals 最新的3个值不是递减
+        last_rsi_ema_vals_3 = self.history_rsi_vals[-3:]
+
+        c1 = (self.exit_condition_1 and last_rsi_ema_vals_3[1] < last_rsi_ema_vals_3[2])
+        c2 = self.exit_condition_1 and current_exit_condition_1 == False
+        return  c1 or c2
     
     def should_add_position(self, data_name):
         """检查是否需要补仓"""
@@ -92,11 +110,9 @@ class Strategy(bt.Strategy):
         current_data = self.get_data_by_name(data_name)
         current_price = current_data.close[0]
         
-        # 补仓条件：当前价格比开仓价格高500，且比上次补仓价格高500
         price_above_entry = current_price >= self.entry_price + self.p.add_position_threshold
         price_above_last_add = current_price >= self.last_add_price + self.p.add_position_threshold
         
-        # 如果是第一次补仓，只需要满足价格高于开仓价500
         if self.add_position_count == 0:
             return price_above_entry
         else:
@@ -110,6 +126,11 @@ class Strategy(bt.Strategy):
         return self.datas[0]  # 默认返回第一个数据
     
     def next(self):
+        for data_name in self.indicators.keys():
+            ind = self.indicators[data_name]
+
+            self.history_rsi_vals.append(ind['rsi_ema'][0])
+
         if self.order:
             return
         
@@ -140,7 +161,7 @@ class Strategy(bt.Strategy):
     def open_short_position(self, data, price, data_name):
         """开空单"""
         # 计算初始仓位大小
-        size = self.calculate_position_size(price, is_new=True)
+        size = self.calculate_position_size(price)
         
         # 下空单（卖出开空）
         self.order = self.sell(data=data, size=size)
@@ -159,7 +180,8 @@ class Strategy(bt.Strategy):
             print(f'  开仓数量: {size}')
             print(f'  EMA20: {self.indicators[data_name]["ema20"][0]:.2f}')
             print(f'  EMA200: {self.indicators[data_name]["ema200"][0]:.2f}')
-            print(f'  布林上轨: {self.indicators[data_name]["boll"].top[0]:.2f}')
+            print(f'  BOLL_TOP: {self.indicators[data_name]["boll"].top[0]:.2f}')
+            print(f'  RSI_EMA: {self.indicators[data_name]["rsi_ema"][0]:.2f}')
     
     def add_short_position(self, data_name):
         """补仓空单"""
@@ -167,7 +189,7 @@ class Strategy(bt.Strategy):
         current_price = data.close[0]
         
         # 计算补仓数量（可以按比例减少，避免风险过大）
-        add_size = self.calculate_position_size(current_price, is_new=False)
+        add_size = self.calculate_position_size(current_price)
         
         # 下补仓空单
         self.order = self.sell(data=data, size=add_size)
@@ -217,25 +239,18 @@ class Strategy(bt.Strategy):
         # 重置持仓信息
         self.reset_position_info()
     
-    def calculate_position_size(self, price, is_new=True):
+    def calculate_position_size(self, price):
         """计算仓位大小"""
-        portfolio_value = self.broker.getvalue()
-        
-        if is_new:
-            # 新开仓：使用2%风险
-            risk_amount = portfolio_value * 0.02
-            size = int(risk_amount / price)
-        else:
-            # 补仓：使用1%风险（减半）
-            risk_amount = portfolio_value * 0.01
-            size = int(risk_amount / price)
-        
-        return max(size, 1)  # 至少1手
+        fixed_amount = 50
+        size = (fixed_amount * self.leverage) / price
+        # .2f表示保留两位小数
+        return round(size, 4)
+
     
     def get_floating_pnl(self, current_price):
         """计算浮动盈亏百分比"""
         if self.entry_price > 0:
-            return (self.entry_price - current_price) / self.entry_price * 100
+            return (self.entry_price - current_price) / self.entry_price * 100 * self.leverage
         return 0
     
     def reset_position_info(self):
@@ -245,6 +260,7 @@ class Strategy(bt.Strategy):
         self.position_size = 0
         self.add_position_count = 0
         self.last_add_price = 0
+        self.exit_condition_1 = False
     
     def notify_order(self, order):
         """订单状态通知"""
@@ -263,7 +279,8 @@ class Strategy(bt.Strategy):
             if self.p.printlog:
                 print(f'{order.data.datetime.datetime(0)} - {order_type}订单完成: '
                       f'价格={order.executed.price:.2f}, '
-                      f'数量={order.executed.size}')
+                      f'数量={order.executed.size}, '
+                      f'余额={self.broker.getvalue():.2f}')
             
             self.order = None
         

@@ -16,10 +16,10 @@ func TestMain(t *testing.T) {
 		exchange.BinanceProductionBaseURL, key, secret)
 
 	// start := "2025-10-01 00:00:00"
-	end := "2025-11-01 00:00:00"
+	end := "2025-09-01 00:00:00"
 	// startTime, _ := time.Parse(exchange.TimeLayout, start)
 	endTime, _ := time.Parse(exchange.TimeLayout, end)
-	limit := 100000
+	limit := 1000
 	for _, item := range []exchange.KlineInterval{
 		exchange.KlineInterval_5m,
 		exchange.KlineInterval_15m,

@@ -13,15 +13,17 @@ from strategy.strategy import Strategy
 def main():
     timeframes = [
         # "5m",
-        "15m",
+        # "15m",
         # "1h", 
-        # "4h",
+        "4h",
     ]
     
     # 2. 创建Backtrader引擎
-    cerebro = bt.Cerebro()
-    cerebro.broker.setcash(100000.0)  # 设置初始资金
-    cerebro.broker.setcommission(commission=0.001)  # 设置交易佣金
+    cerebro = bt.Cerebro(stdstats=False)
+    cerebro.addobserver(bt.observers.Broker) 
+    cerebro.addobserver(bt.observers.BuySell) 
+    cerebro.broker.setcash(1000.0)  # 设置初始资金
+    cerebro.broker.setcommission(commission=0.005)  # 设置交易佣金
 
     # 为每个时间框架加载并添加数据
     for i, timeframe in enumerate(timeframes):
@@ -78,8 +80,9 @@ def main():
     
     # 6. 绘制结果 - 调整参数避免重叠
     cerebro.plot(
+        # style='candle',
+        volume=True,
         grid=False,
-        # voloverlay=False,
     )
 
 if __name__ == '__main__':
