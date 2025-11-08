@@ -3,9 +3,7 @@ package exchange
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"sync"
-	"time"
 
 	sdk "github.com/binance/binance-connector-go"
 	"github.com/shopspring/decimal"
@@ -36,15 +34,17 @@ func GetBinanceConnector(baseURL, key, secret string) *BinanceConnector {
 			panic(err)
 		}
 
-		go func() {
-			for {
-				<-time.After(time.Second)
-				if err := instance.onUpdateSymbolTickerPrice(); err != nil {
-					log.Printf("[ERROR]UpdateSymbolTickerPrice: %v\n", err)
-					continue
+		/*
+			go func() {
+				for {
+					<-time.After(time.Second)
+					if err := instance.onUpdateSymbolTickerPrice(); err != nil {
+						log.Printf("[ERROR]UpdateSymbolTickerPrice: %v\n", err)
+						continue
+					}
 				}
-			}
-		}()
+			}()
+		*/
 	})
 	return instance
 }
@@ -85,12 +85,17 @@ func (bc *BinanceConnector) Balance() decimal.Decimal {
 	return bc.totalBalance
 }
 
-func (bc *BinanceConnector) Klines(interval KlineInterval, startTime, endTime uint64) ([]Kline, error) {
+func (bc *BinanceConnector) Klines(interval KlineInterval, startTime, endTime uint64, limit int) ([]Kline, error) {
 	klineService := bc.client.NewKlinesService()
 	klineService.Symbol(bc.symbol)
 	klineService.Interval(string(interval))
-	klineService.StartTime(startTime)
+	if startTime > 0 {
+		klineService.StartTime(startTime)
+	}
 	klineService.EndTime(endTime)
+	if limit > 0 {
+		klineService.Limit(limit)
+	}
 	resp, err := klineService.Do(context.Background())
 	if err != nil {
 		return nil, err

@@ -13,32 +13,46 @@ func TestMain(t *testing.T) {
 	key := "6xUgCXmQ9zCnxXygzCIuFEC9PysFqDENOdE82tF0RHsISDZ9KtCD5r4kkTvhSBPs"
 	secret := "cWPLmSasjcATAs9fFnn69z2xRlju67wPpVTr7ddO6s2UvWSe32Z2sIPheYyUog1T"
 	connector := exchange.GetBinanceConnector(
-		exchange.BinanceTestnetBaseURL, key, secret)
+		exchange.BinanceProductionBaseURL, key, secret)
 
-	start := "2025-11-01 00:00:00"
-	end := "2025-11-07 23:00:00"
-	startTime, _ := time.Parse(exchange.TimeLayout, start)
+	// start := "2025-10-01 00:00:00"
+	end := "2025-11-01 00:00:00"
+	// startTime, _ := time.Parse(exchange.TimeLayout, start)
 	endTime, _ := time.Parse(exchange.TimeLayout, end)
-	klines, err := connector.Klines(
+	limit := 100000
+	for _, item := range []exchange.KlineInterval{
+		exchange.KlineInterval_5m,
+		exchange.KlineInterval_15m,
 		exchange.KlineInterval_1h,
-		uint64(startTime.UnixMilli()),
-		uint64(endTime.UnixMilli()),
-	)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Klines count:", len(klines))
+		exchange.KlineInterval_4h,
+		// exchange.KlineInterval_1d,
+		// exchange.KlineInterval_1w,
+	} {
+		klines, err := connector.Klines(
+			item,
+			// uint64(startTime.UnixMilli()),
+			0,
+			uint64(endTime.UnixMilli()),
+			// 0,
+			limit,
+		)
 
-	// klines -> data.json  local file
-	// 将结构体切片转换为 JSON
-	data, err := json.MarshalIndent(klines, "", "  ")
-	if err != nil {
-		panic(err)
-	}
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s count:%d\n", item, len(klines))
 
-	// 写入文件
-	fn := fmt.Sprintf("../data/%s_%s.json", "BTCUSDT", exchange.KlineInterval_1h)
-	if err = os.WriteFile(fn, data, 0644); err != nil {
-		panic(err)
+		// klines -> data.json  local file
+		// 将结构体切片转换为 JSON
+		data, err := json.MarshalIndent(klines, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+
+		// 写入文件
+		fn := fmt.Sprintf("../data/%s_%s.json", "BTCUSDT", item)
+		if err = os.WriteFile(fn, data, 0644); err != nil {
+			panic(err)
+		}
 	}
 }

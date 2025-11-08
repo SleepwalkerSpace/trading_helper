@@ -30,8 +30,8 @@ def load_local_klines(file_path: str):
                     'trades': kline['numberOfTrades'],
                     'taker_buy_volume': float(kline['takerBuyBaseAssetVolume']),
                     'taker_sell_volume': float(kline['takerSellBaseAssetVolume']),
-                    'buy_ratio': float(kline['buyRatio']),
-                    'sell_ratio': float(kline['sellRatio'])
+                    # 'buy_ratio': float(kline['buyRatio']),
+                    # 'sell_ratio': float(kline['sellRatio'])
                 })
                 
             except Exception as e:

@@ -30,8 +30,8 @@ func (kline *Kline) Complete() {
 	buyVolume, _ := decimal.NewFromString(kline.TakerBuyBaseAssetVolume)
 	sellVolume := totalVolume.Sub(buyVolume)
 	kline.TakerSellBaseAssetVolume = sellVolume.String()
-	kline.BuyRatio = buyVolume.Div(totalVolume).Mul(decimal.NewFromInt(100)).StringFixed(2)
-	kline.SellRatio = sellVolume.Div(totalVolume).Mul(decimal.NewFromInt(100)).StringFixed(2)
+	//kline.BuyRatio = buyVolume.Div(totalVolume).Mul(decimal.NewFromInt(100)).StringFixed(2)
+	//kline.SellRatio = sellVolume.Div(totalVolume).Mul(decimal.NewFromInt(100)).StringFixed(2)
 }
 
 func (kline *Kline) String() string {
