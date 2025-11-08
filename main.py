@@ -79,7 +79,7 @@ def main():
     # 6. 绘制结果 - 调整参数避免重叠
     cerebro.plot(
         grid=False,
-        voloverlay=False,
+        # voloverlay=False,
     )
 
 if __name__ == '__main__':
