@@ -16,7 +16,7 @@ func TestMain(t *testing.T) {
 		exchange.BinanceTestnetBaseURL, key, secret)
 
 	start := "2025-11-01 00:00:00"
-	end := "2025-11-02 23:00:00"
+	end := "2025-11-07 23:00:00"
 	startTime, _ := time.Parse(exchange.TimeLayout, start)
 	endTime, _ := time.Parse(exchange.TimeLayout, end)
 	klines, err := connector.Klines(
