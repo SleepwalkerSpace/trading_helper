@@ -24,7 +24,7 @@ class StrategyOverbought(bt.Strategy):
                 IndicatorType.EMA_20: btind.ExponentialMovingAverage(self.datas[i], period=14),
                 IndicatorType.EMA_200: btind.ExponentialMovingAverage(self.datas[i], period=200),
                 IndicatorType.BOLL_200: btind.BollingerBands(self.datas[i], period=200),
-                IndicatorType.RSI_EMA: btind.RSI_EMA(self.datas[i], period=14)
+                IndicatorType.RSI_EMA: btind.RSI_EMA(self.datas[i], period=14, upperband=70, lowerband=30, plot=True),
             }
         
         self.order = None
@@ -39,22 +39,45 @@ class StrategyOverbought(bt.Strategy):
             not bt.math.isnan(ind[IndicatorType.BOLL_200].top[0]),
             not bt.math.isnan(ind[IndicatorType.BOLL_200].mid[0]),
             not bt.math.isnan(ind[IndicatorType.BOLL_200].bot[0]),
-            not bt.math.isnan(ind[IndicatorType.RSI_EMA].top[0]),
+            not bt.math.isnan(ind[IndicatorType.RSI_EMA][0]),
         ]
         return all(conditions)
 
+    def get_current_price(self):
+        return self.datas[0].close[0]
+    
     def is_short_signal(self):
         """是否满足做空信号"""
-        current_price = self.datas[0]
-        current_inds = self.timeframe_indicators[0]
+        current_price = self.get_current_price()
 
-        conditions = [
-            current_price > current_inds[IndicatorType.EMA_20],
-            current_inds[IndicatorType.EMA_20] > current_inds[IndicatorType.EMA_200],
-            current_inds[IndicatorType.EMA_20] > current_inds[IndicatorType.BOLL_200].top[0],
-            current_inds[IndicatorType.EMA_200] > current_inds[IndicatorType.BOLL_200].mid[0],
+        # 小时间级别指标
+        current_inds_0 = self.timeframe_indicators[0]
+        conditions_0 = [
+            current_price > current_inds_0[IndicatorType.EMA_20],
+            current_inds_0[IndicatorType.EMA_20] > current_inds_0[IndicatorType.EMA_200],
+            current_inds_0[IndicatorType.EMA_20] > current_inds_0[IndicatorType.BOLL_200].top[0],
+            current_inds_0[IndicatorType.EMA_200] > current_inds_0[IndicatorType.BOLL_200].mid[0],
+            current_inds_0[IndicatorType.RSI_EMA][-1] >= 80,
         ]
-        return all(conditions)
+        if all(conditions_0):
+            print("conditions_0", 
+                  current_inds_0[IndicatorType.RSI_EMA][-2],">>",
+                  current_inds_0[IndicatorType.RSI_EMA][-1],">>",
+                  current_inds_0[IndicatorType.RSI_EMA][0])
+
+
+        # 大时间级别指标
+        current_inds_1 = self.timeframe_indicators[1]
+        conditions_1 = [
+            current_price > current_inds_1[IndicatorType.EMA_20],
+            current_inds_1[IndicatorType.EMA_20] > current_inds_1[IndicatorType.EMA_200],
+            # current_inds_1[IndicatorType.EMA_20] > current_inds_1[IndicatorType.BOLL_200].top[0],
+            current_inds_1[IndicatorType.EMA_200] > current_inds_1[IndicatorType.BOLL_200].mid[0],
+            current_inds_1[IndicatorType.RSI_EMA][-1] >= 80,
+        ]
+        
+        return all(conditions_0) and not all(conditions_1)
+        # return all(conditions_0) and all(conditions_1)
 
     def is_exit_signal(self):
         """是否平仓"""
@@ -66,13 +89,14 @@ class StrategyOverbought(bt.Strategy):
         return all(conditions)
 
     def next(self):
+
         if self.position and self.position.size < 0:  # 持有空单
             if self.is_exit_signal():
                 self.close(data=self.datas[0])
 
         else:
             if self.is_short_signal():
-                if self.trade_count > 0:
+                if self.trade_count > 3:
                     return
                 self.sell(data=self.datas[0], size=0.2)
                 self.trade_count += 1
