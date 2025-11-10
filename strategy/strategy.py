@@ -27,8 +27,8 @@ class Strategy(bt.Strategy):
                 self.datas[i], period=200)
             self.indicators[data_name]['boll'] = btind.BollingerBands(
                 self.datas[i], period=200)
-            self.indicators[data_name]['rsi_ema'] =btind.RSI_EMA(self.datas[i], period=14, upperband=70, lowerband=30, plot=True)
-        
+            self.indicators[data_name]['rsi_ema'] = btind.RSI_EMA(self.datas[i], period=14, upperband=70, lowerband=30, plot=True)
+          
         # 订单跟踪和持仓管理
         self.order = None
         self.entry_price = 0           # 开仓价格
