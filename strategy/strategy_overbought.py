@@ -24,7 +24,7 @@ class StrategyOverbought(bt.Strategy):
                 IndicatorType.EMA_20: btind.ExponentialMovingAverage(self.datas[i], period=20),
                 IndicatorType.EMA_200: btind.ExponentialMovingAverage(self.datas[i], period=200),
                 IndicatorType.BOLL_200: btind.BollingerBands(self.datas[i], period=200),
-                IndicatorType.RSI_EMA: btind.RSI_EMA(self.datas[i], period=14, upperband=80, lowerband=30, plot=True),
+                IndicatorType.RSI_EMA: btind.RSI_EMA(self.datas[i], period=20, upperband=80, lowerband=30, plot=True),
             }
         
         self.order = None
@@ -53,17 +53,30 @@ class StrategyOverbought(bt.Strategy):
 
         # 小时间级别指标
         current_inds_0 = self.timeframe_indicators[0]
+
+        # 判断ema20 是否在boll top上方 或者下方附近
+
+        sub = current_inds_0[IndicatorType.EMA_20] - current_inds_0[IndicatorType.BOLL_200].top[0] 
+        flag = False
+        if sub >= 0:
+            flag = True
+        else:
+            # 判断是否在下方附近, 误差范围百分比 0.01
+            if current_inds_0[IndicatorType.BOLL_200].top[0] - current_inds_0[IndicatorType.EMA_20] <= 100:
+                flag = True
+
+
         conditions_0 = [
             # 当前价格 > EMA20
             current_price_0 > current_inds_0[IndicatorType.EMA_20],
             # EMA20 > EMA200
             current_inds_0[IndicatorType.EMA_20] > current_inds_0[IndicatorType.EMA_200],
+            
+            flag == True,
             # EMA200 > BOLL200中轨
             current_inds_0[IndicatorType.EMA_200] > current_inds_0[IndicatorType.BOLL_200].mid[0],
-            # RSI_EMA 超买且出现回落
+            # RSI_EMA > 80
             current_inds_0[IndicatorType.RSI_EMA][-1] >= 80,
-            current_inds_0[IndicatorType.RSI_EMA][-2] > current_inds_0[IndicatorType.RSI_EMA][-1],
-            current_inds_0[IndicatorType.RSI_EMA][-1] > current_inds_0[IndicatorType.RSI_EMA][0],
         ]
 
         if not all(conditions_0):
@@ -73,8 +86,8 @@ class StrategyOverbought(bt.Strategy):
         current_inds_1 = self.timeframe_indicators[1]
         current_inds_1_rsi_line = [current_inds_1[IndicatorType.RSI_EMA][-2],  current_inds_1[IndicatorType.RSI_EMA][-1],current_inds_1[IndicatorType.RSI_EMA][0]]
         conditions_1 = [
-            max(current_inds_1_rsi_line)/2 > min(current_inds_1_rsi_line),
-            current_inds_1[IndicatorType.RSI_EMA][0] >= 80,
+            # max(current_inds_1_rsi_line) / 0.618 > min(current_inds_1_rsi_line),
+            current_inds_1[IndicatorType.RSI_EMA][0] >= 70,
         ]
 
         ok = all(conditions_0) and all(conditions_1)
@@ -88,10 +101,10 @@ class StrategyOverbought(bt.Strategy):
 
     def is_exit_signal(self):
         """是否平仓"""
-        current_price = self.datas[1]
-        current_inds = self.timeframe_indicators[1]
+        current_price = self.datas[0]
+        current_inds = self.timeframe_indicators[0]
         conditions = [
-            current_price <= current_inds[IndicatorType.BOLL_200].bot[0]
+            current_inds[IndicatorType.EMA_20][0] < current_inds[IndicatorType.BOLL_200].bot[0],
         ]
         return all(conditions)
 
