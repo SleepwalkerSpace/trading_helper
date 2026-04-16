@@ -12,8 +12,8 @@ from strategy.strategy_overbought import StrategyOverbought
 def main():
     timeframes = [
         "5m",
-        # "15m",
-        "1h", 
+        "15m",
+        # "1h", 
         # "4h",
     ]
     
@@ -22,7 +22,10 @@ def main():
     cerebro.addobserver(bt.observers.Broker) 
     cerebro.addobserver(bt.observers.BuySell) 
     cerebro.broker.setcash(1000.0)  # 设置初始资金
-    cerebro.broker.setcommission(commission=0.005)  # 设置交易佣金
+    # 每笔交易使用固定交易量  
+    # cerebro.addsizer(bt.sizers.FixedSize, stake=100) 
+    # 设置佣金为0.0 
+    cerebro.broker.setcommission(commission=0.0) 
 
     # 为每个时间框架加载并添加数据
     for i, timeframe in enumerate(timeframes):

@@ -25,6 +25,7 @@ class StrategyOverbought(bt.Strategy):
                 IndicatorType.EMA_200: btind.ExponentialMovingAverage(self.datas[i], period=200),
                 IndicatorType.BOLL_200: btind.BollingerBands(self.datas[i], period=200),
                 IndicatorType.RSI_EMA: btind.RSI_EMA(self.datas[i], period=20, upperband=80, lowerband=30, plot=True),
+                
             }
         
         self.order = None
@@ -55,7 +56,6 @@ class StrategyOverbought(bt.Strategy):
         current_inds_0 = self.timeframe_indicators[0]
 
         # 判断ema20 是否在boll top上方 或者下方附近
-
         sub = current_inds_0[IndicatorType.EMA_20] - current_inds_0[IndicatorType.BOLL_200].top[0] 
         flag = False
         if sub >= 0:

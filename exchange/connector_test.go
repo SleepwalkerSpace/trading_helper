@@ -19,8 +19,8 @@ func TestMain(t *testing.T) {
 
 	// 更合理的时间范围（使用过去的数据，避免未来日期）
 	now := time.Now()
-	startTime := now.AddDate(0, -3, 0) // 3个月前
-	endTime := now.AddDate(0, -1, 0)   // 1个月前
+	startTime := now.AddDate(0, -2, 0) // 3个月前
+	endTime := now.AddDate(0, 0, 0)    // 1个月前
 
 	limit := 1000
 
