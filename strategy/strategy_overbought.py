@@ -91,12 +91,12 @@ class StrategyOverbought(bt.Strategy):
         ]
 
         ok = all(conditions_0) and all(conditions_1)
-        if ok:
-            print(
-                current_inds_1[IndicatorType.RSI_EMA][-2],
-                current_inds_1[IndicatorType.RSI_EMA][-1],
-                current_inds_1[IndicatorType.RSI_EMA][0],
-            )
+        # if ok:
+        #     print(
+        #         current_inds_1[IndicatorType.RSI_EMA][-2],
+        #         current_inds_1[IndicatorType.RSI_EMA][-1],
+        #         current_inds_1[IndicatorType.RSI_EMA][0],
+        #     )
         return ok
 
     def is_exit_signal(self):
@@ -113,10 +113,12 @@ class StrategyOverbought(bt.Strategy):
         if self.position and self.position.size < 0:  # 持有空单
             if self.is_exit_signal():
                 self.close(data=self.datas[0])
+                print("平仓信号满足, 执行平仓", self.broker.getvalue())
 
         else:
             if self.is_short_signal():
                 if self.trade_count > 3:
                     return
-                self.sell(data=self.datas[0], size=0.2)
+                self.sell(data=self.datas[0], size=0.1)
                 self.trade_count += 1
+                print("做空信号满足, 执行做空", self.broker.getvalue())

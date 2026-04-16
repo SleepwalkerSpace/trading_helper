@@ -11,9 +11,9 @@ from strategy.strategy_overbought import StrategyOverbought
 
 def main():
     timeframes = [
-        "5m",
+        # "5m",
         "15m",
-        # "1h", 
+        "1h", 
         # "4h",
     ]
     
