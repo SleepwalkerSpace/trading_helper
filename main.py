@@ -6,14 +6,14 @@ import backtrader as bt
 import pandas as pd
 
 from strategy.load_local_klines import load_local_klines
-from strategy.strategy_overbought import StrategyOverbought
+from strategy.strategy_demo import StrategyDemo
 
 
 def main():
     timeframes = [
-        # "5m",
-        "15m",
-        "1h", 
+        "5m",
+        # "15m",
+        # "1h", 
         # "4h",
     ]
     
@@ -35,6 +35,7 @@ def main():
         
         print(f"加载数据: {file_path}")
         df = load_local_klines(file_path)
+        
         
         if df is None or df.empty:
             print(f"数据加载失败: {file_path}")
@@ -73,7 +74,7 @@ def main():
         cerebro.adddata(data_feed, name=timeframe)
 
     # 4. 添加策略
-    cerebro.addstrategy(StrategyOverbought)
+    cerebro.addstrategy(StrategyDemo)
 
     # 5. 运行回测
     print("初始资金: %.2f" % cerebro.broker.getvalue())

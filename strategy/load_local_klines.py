@@ -14,6 +14,8 @@ def load_local_klines(file_path: str):
         data_list = []
         
         for i, kline in enumerate(kline_data):
+            # if i == 3000:
+            #     break
             try:
                 dt = datetime.fromtimestamp(kline['openTime'] / 1000)
                 # 转换数据类型（字符串转浮点数）
