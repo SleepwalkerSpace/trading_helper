@@ -105,15 +105,15 @@ class StrategyDemo(bt.Strategy):
         # 暂无仓位
         else:
             signal = self.sigle()
-            if signal == SignalType.SELL:
+            if signal == SignalType.SELL: # 满足做空条件
                 if before_avg_volume_14 > 0:
                     vol_ratio = current_volume / before_avg_volume_14
-                    if vol_ratio >= 1.5:  # 当前成交量是过去14期平均成交量的3倍以上
+                    if vol_ratio >= 1.5:  # 当前成交量是过去14期平均成交量的1.5倍以上
                         return  # 跳过交易，避免在异常高成交量时入场
+
                 self.sell(data=self.datas[0], size=0.1)
                 self.trade_count += 1
-                print("做空: ", self.trade_count, self.get_current_price(0), self.broker.getvalue())
-                print("Volume: ", current_volume, "AvgVolume14: ", before_avg_volume_14, "Ratio: ", current_volume/before_avg_volume_14 if before_avg_volume_14 > 0 else "N/A")
+                print("做空: ", self.trade_count, self.get_current_price(0), self.broker.getvalue(), current_volume/before_avg_volume_14 if before_avg_volume_14 > 0 else "N/A")
 
                 if self.is_overbought == False:
                     self.is_overbought = True
