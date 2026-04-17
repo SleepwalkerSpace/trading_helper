@@ -18,8 +18,10 @@ class StrategyDemo(bt.Strategy):
         # 超买阈值
         self.oversold_threshold = 30
         self.is_oversold = False
-        # 
+        # 记录成交量数据
         self.volumes = []
+        # 记录余额数据
+        self.bals = []
 
         # 各个时间框架的指标
         self.timeframe_indicators = {}
@@ -83,6 +85,8 @@ class StrategyDemo(bt.Strategy):
                 if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi <= 35 or self.get_current_price(0) <= self.get_current_indicators(0)[IndicatorType.BOLL_200].bot:
                     self.close(data=self.datas[0])
                     print("平仓 - 止盈: ", self.get_current_price(0), self.broker.getvalue())
+                    self.bals.append(self.broker.getvalue())
+                    print("最低余额:",min(self.bals) if self.bals else "N/A", "最高余额",max(self.bals) if self.bals else "N/A",)
 
                 else:
                     open_price = self.position.price
@@ -93,10 +97,15 @@ class StrategyDemo(bt.Strategy):
                                 self.close(data=self.datas[0])
                                 self.is_overbought = False
                                 print("平仓 - 止损(1): ", self.get_current_price(0), self.broker.getvalue())
+                                self.bals.append(self.broker.getvalue())
+                                print("最低余额:",min(self.bals) if self.bals else "N/A", "最高余额",max(self.bals) if self.bals else "N/A",)
+
                         elif curr_price-open_price >= 200:
                             self.close(data=self.datas[0])
                             self.is_overbought = False
                             print("平仓 - 止损(2): ", self.get_current_price(0), self.broker.getvalue())
+                            self.bals.append(self.broker.getvalue())
+                            print("最低余额:",min(self.bals) if self.bals else "N/A", "最高余额",max(self.bals) if self.bals else "N/A",)
 
             # 做多仓位
             else:
@@ -114,7 +123,7 @@ class StrategyDemo(bt.Strategy):
                 self.sell(data=self.datas[0], size=0.1)
                 self.trade_count += 1
                 print("做空: ", self.trade_count, self.get_current_price(0), self.broker.getvalue(), current_volume/before_avg_volume_14 if before_avg_volume_14 > 0 else "N/A")
-
+                self.bals.append(self.broker.getvalue())
                 if self.is_overbought == False:
                     self.is_overbought = True
                     # print("超买开始: ", self.get_current_price(0), self.broker.getvalue())

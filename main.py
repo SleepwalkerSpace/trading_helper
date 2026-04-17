@@ -10,6 +10,8 @@ from strategy.strategy_demo import StrategyDemo
 
 
 def main():
+    initial_cash = 1000.0
+
     timeframes = [
         "5m",
         # "15m",
@@ -21,7 +23,7 @@ def main():
     cerebro = bt.Cerebro(stdstats=False)
     cerebro.addobserver(bt.observers.Broker) 
     cerebro.addobserver(bt.observers.BuySell) 
-    cerebro.broker.setcash(1000.0)  # 设置初始资金
+    cerebro.broker.setcash(initial_cash)  # 设置初始资金
     # 每笔交易使用固定交易量  
     # cerebro.addsizer(bt.sizers.FixedSize, stake=100) 
     # 设置佣金为0.0 
@@ -79,7 +81,7 @@ def main():
     # 5. 运行回测
     print("初始资金: %.2f" % cerebro.broker.getvalue())
     cerebro.run()
-    print("最终资金: %.2f" % cerebro.broker.getvalue())
+    print("初始资金: %.2f" % initial_cash, "最终资金: %.2f" % cerebro.broker.getvalue())
     
     # 6. 绘制结果 - 调整参数避免重叠
     cerebro.plot(
