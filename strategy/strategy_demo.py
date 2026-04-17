@@ -12,8 +12,14 @@ class StrategyDemo(bt.Strategy):
     def __init__(self):
         # 交易次数初始化为0
         self.trade_count = 0
-        # 订单对象初始化为None
-        self.order = None
+        # 超买阈值
+        self.overbought_threshold = 70
+        self.is_overbought = False
+        # 超买阈值
+        self.oversold_threshold = 30
+        self.is_oversold = False
+        # 
+        self.volumes = []
 
         # 各个时间框架的指标
         self.timeframe_indicators = {}
@@ -59,22 +65,39 @@ class StrategyDemo(bt.Strategy):
         return SignalType.SELL if all(buy_conditions) else None
 
     def next(self):
+        before_avg_volume_14 = 0
+        if len(self.volumes) >= 14:
+            before_avg_volume_14 = sum(self.volumes[-14:]) / 14
+        current_volume = self.datas[0].volume[0]
+        self.volumes.append(current_volume)
+
+        if self.is_overbought:
+            if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi < self.overbought_threshold:
+                self.is_overbought = False
+                # print("超买结束: ", self.get_current_price(0), self.broker.getvalue())
+
         # 持有仓位
         if self.position:
             # 做空仓位
             if self.position.size < 0:
-                if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi <= 30:
+                if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi <= 35 or self.get_current_price(0) <= self.get_current_indicators(0)[IndicatorType.BOLL_200].bot:
                     self.close(data=self.datas[0])
-                    print("平仓 - 止盈: ", self.broker.getvalue())
+                    print("平仓 - 止盈: ", self.get_current_price(0), self.broker.getvalue())
+
                 else:
                     open_price = self.position.price
                     curr_price = self.position.adjbase
                     if curr_price > open_price: 
-                        if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi >= 80:
+                        if self.get_current_indicators(0)[IndicatorType.RSI_EMA].rsi >= 70 and self.is_overbought == False:
+                            if curr_price > self.get_current_indicators(0)[IndicatorType.BOLL_200].top:
+                                self.close(data=self.datas[0])
+                                self.is_overbought = False
+                                print("平仓 - 止损(1): ", self.get_current_price(0), self.broker.getvalue())
+                        elif curr_price-open_price >= 200:
                             self.close(data=self.datas[0])
-                            print("平仓 - 止损: ", self.broker.getvalue())
-                                
-            
+                            self.is_overbought = False
+                            print("平仓 - 止损(2): ", self.get_current_price(0), self.broker.getvalue())
+
             # 做多仓位
             else:
                 pass
@@ -83,7 +106,15 @@ class StrategyDemo(bt.Strategy):
         else:
             signal = self.sigle()
             if signal == SignalType.SELL:
-                self.sell(data=self.datas[0],size=0.05)
+                if before_avg_volume_14 > 0:
+                    vol_ratio = current_volume / before_avg_volume_14
+                    if vol_ratio >= 1.5:  # 当前成交量是过去14期平均成交量的3倍以上
+                        return  # 跳过交易，避免在异常高成交量时入场
+                self.sell(data=self.datas[0], size=0.1)
                 self.trade_count += 1
                 print("做空: ", self.trade_count, self.get_current_price(0), self.broker.getvalue())
-            
+                print("Volume: ", current_volume, "AvgVolume14: ", before_avg_volume_14, "Ratio: ", current_volume/before_avg_volume_14 if before_avg_volume_14 > 0 else "N/A")
+
+                if self.is_overbought == False:
+                    self.is_overbought = True
+                    # print("超买开始: ", self.get_current_price(0), self.broker.getvalue())

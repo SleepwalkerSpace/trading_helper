@@ -14,7 +14,7 @@ def load_local_klines(file_path: str):
         data_list = []
         
         for i, kline in enumerate(kline_data):
-            # if i == 3000:
+            # if i == 1000:
             #     break
             try:
                 dt = datetime.fromtimestamp(kline['openTime'] / 1000)
