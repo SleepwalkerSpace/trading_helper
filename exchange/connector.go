@@ -22,12 +22,12 @@ type BinanceConnector struct {
 	totalBalance      decimal.Decimal
 }
 
-func GetBinanceConnector(baseURL, key, secret string) *BinanceConnector {
+func GetBinanceConnector(baseURL, key, secret string, symbol string) *BinanceConnector {
 	once.Do(func() {
 		instance = &BinanceConnector{
 			client: sdk.NewClient(key, secret, baseURL),
 
-			symbol:            "BTCUSDT",
+			symbol:            symbol,
 			symbolTickerPrice: decimal.Zero,
 		}
 		if err := instance.onUpdateSymbolTickerPrice(); err != nil {

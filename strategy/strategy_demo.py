@@ -61,8 +61,8 @@ class StrategyDemo(bt.Strategy):
         current_inds_0 = self.get_current_indicators(0)
 
         buy_conditions = [
-            current_price_0 > current_inds_0[IndicatorType.BOLL_200].top,
-            current_inds_0[IndicatorType.RSI_EMA].rsi >= 70,
+            current_price_0 >= current_inds_0[IndicatorType.BOLL_200].top,
+            current_inds_0[IndicatorType.RSI_EMA].rsi >= self.overbought_threshold,
         ]
         return SignalType.SELL if all(buy_conditions) else None
 

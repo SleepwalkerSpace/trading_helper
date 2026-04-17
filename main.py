@@ -27,12 +27,14 @@ def main():
     # 每笔交易使用固定交易量  
     # cerebro.addsizer(bt.sizers.FixedSize, stake=100) 
     # 设置佣金为0.0 
-    cerebro.broker.setcommission(commission=0.0) 
+    cerebro.broker.setcommission(commission=0.0)
 
+    # symbol = "BTCUSDT"
+    symbol = "ETHUSDT"
     # 为每个时间框架加载并添加数据
     for i, timeframe in enumerate(timeframes):
         # 1. 加载本地K线数据
-        file_name = 'BTCUSDT_' + timeframe + '.json'
+        file_name = symbol + '_' + timeframe + '.json'
         file_path = os.path.join(os.path.dirname(__file__), 'data', file_name)
         
         print(f"加载数据: {file_path}")

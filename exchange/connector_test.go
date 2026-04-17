@@ -15,7 +15,9 @@ const (
 )
 
 func TestMain(t *testing.T) {
-	connector := exchange.GetBinanceConnector(exchange.BinanceProductionBaseURL, key, secret)
+	// symbol := "BTCUSDT"
+	symbol := "ETHUSDT"
+	connector := exchange.GetBinanceConnector(exchange.BinanceProductionBaseURL, key, secret, symbol)
 
 	// 更合理的时间范围（使用过去的数据，避免未来日期）
 	now := time.Now()
@@ -26,10 +28,10 @@ func TestMain(t *testing.T) {
 
 	intervals := []exchange.KlineInterval{
 		exchange.KlineInterval_5m,
-		exchange.KlineInterval_15m,
-		exchange.KlineInterval_1h,
-		exchange.KlineInterval_4h,
-		exchange.KlineInterval_1d,
+		// exchange.KlineInterval_15m,
+		// exchange.KlineInterval_1h,
+		// exchange.KlineInterval_4h,
+		// exchange.KlineInterval_1d,
 	}
 
 	for _, item := range intervals {
@@ -43,7 +45,7 @@ func TestMain(t *testing.T) {
 			continue
 		}
 
-		fmt.Printf("正在获取 %s K线数据...\n", item)
+		fmt.Printf("正在获取 %s %s K线数据...\n", symbol, item)
 
 		var totalKlines []exchange.Kline
 		currentStart := startAt
@@ -83,7 +85,7 @@ func TestMain(t *testing.T) {
 		fmt.Printf("✅ %s 完成: 共 %d 根K线\n", item, len(totalKlines))
 
 		// 保存数据
-		if err := saveKlinesToFile(totalKlines, "BTCUSDT", item); err != nil {
+		if err := saveKlinesToFile(totalKlines, symbol, item); err != nil {
 			panic(fmt.Sprintf("保存数据失败: %v", err))
 		}
 	}
